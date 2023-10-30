@@ -102,7 +102,6 @@ const Messages = ({ person, conversation, messages, setMessages, isIncognito }) 
             if (!isIncognito) {
                 if (message?.text.trimEnd() !== '') {
                     socket.current.emit('sendMessage', message);
-                    console.log(message)
                     await newMessage(message);
                 }
             } else {
