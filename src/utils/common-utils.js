@@ -18,7 +18,6 @@ export const downloadMedia = async (e, originalImage) => {
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-0
                 const nameSplit = originalImage.split("/");
                 const duplicateName = nameSplit.pop();
 

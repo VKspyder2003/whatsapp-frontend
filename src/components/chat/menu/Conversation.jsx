@@ -88,10 +88,13 @@ const Conversation = ({ user }) => {
                     <Text>
                         {message?.text?.includes('whatsapp-backend')
                             ? 'media'
-                            : message.text.length > 35
-                                ? message.text.substring(0, 35) + '...'
-                                : message.text}
+                            : message && message.text
+                                ? message.text.length > 35
+                                    ? message.text.substring(0, 35) + '...'
+                                    : message.text
+                                : ''}
                     </Text>
+
                 </Box>
             </Box>
         </Component>
