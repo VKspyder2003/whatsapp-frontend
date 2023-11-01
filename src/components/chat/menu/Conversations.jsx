@@ -23,6 +23,10 @@ const StyledDivider = styled(Divider)`
     opacity: .6;
 `;
 
+const NoResultsMessage = styled(Box)`
+    text-align: center;
+`;
+
 const Conversations = ({ text }) => {
     const [users, setUsers] = useState([]);
     const [fetchResult, setFetchResult] = useState(true);
@@ -65,17 +69,19 @@ const Conversations = ({ text }) => {
                     <p>Loading users...</p>
                 </div>
             ) : fetchResult ? (
-                users.map((user) => {
-                    if (user.sub !== account.sub)
-                        return (
+                users.length === 0 ? (
+                    <NoResultsMessage>No results found</NoResultsMessage>
+                ) : (
+                    users
+                        .filter((user) => user.sub !== account.sub)
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((user) => (
                             <React.Fragment key={user.sub}>
                                 <Conversation user={user} />
                                 <StyledDivider />
                             </React.Fragment>
-                        );
-                    else
-                        return null;
-                })
+                        ))
+                )
             ) : (
                 <Alert severity="error">
                     <AlertTitle>Error</AlertTitle>
