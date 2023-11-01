@@ -21,7 +21,7 @@ const ClearChatConfirmationModal = ({ open, handleClose, handleClearChat }) => {
                 <Button onClick={handleClose} color="success">
                     Cancel
                 </Button>
-                <Button onClick={() => { handleClearChat(); handleClose(); }} color="warning">
+                <Button onClick={() => { handleClearChat(); handleClose(); }} color="error">
                     Confirm
                 </Button>
             </DialogActions>
