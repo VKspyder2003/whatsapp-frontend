@@ -96,7 +96,7 @@ const ImageMessage = ({ message }) => {
                 <GetApp
                     onClick={(e) => downloadMedia(e, message.text)}
                     fontSize='small'
-                    style={{ marginRight: 10, border: '1px solid grey', borderRadius: '50%', cursor: "pointer", color: "white" }}
+                    style={{ marginRight: 10, border: '1px solid grey', borderRadius: '50%', cursor: "pointer" }}
                 />
                 {formatDate(message.createdAt)}
             </Time>
