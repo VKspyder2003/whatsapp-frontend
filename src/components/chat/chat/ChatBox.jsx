@@ -28,12 +28,19 @@ const LoadingArea = styled(Box)`
 
 const ChatBox = () => {
 
-    const { person, account, socket, setUpdateMessage } = useContext(AccountContext)
+    const { person, account, socket, setReadConversationId } = useContext(AccountContext)
 
     const [conversation, setConversation] = useState(null);
     const [messages, setMessages] = useState([]);
     const [isIncognito, setIsIncognito] = useState(false);
     const [isConversationLoading, setIsConversationLoading] = useState(false);
+
+    useEffect(() => {
+        // Reset read conversation when switching chats
+        return () => {
+            setReadConversationId(null);
+        };
+    }, [person?.sub, setReadConversationId]);
 
     useEffect(() => {
         const socketInstance = socket.current;
@@ -83,12 +90,12 @@ const ChatBox = () => {
                     setConversation(data || {});
                 }
 
-                if (data?._id && data?.unreadCount > 0) {
+                if (data?._id) {
                     await markMessagesRead({
                         conversationId: data._id,
                         receiverId: account.sub
                     });
-                    setUpdateMessage(prev => !prev);
+                    setReadConversationId(data._id);
                 }
             } catch (error) {
                 console.error('Failed to prepare conversation:', error);
@@ -107,7 +114,7 @@ const ChatBox = () => {
         return () => {
             isMounted = false;
         }
-    }, [account?.sub, person?.sub, setUpdateMessage]);
+    }, [account?.sub, person?.sub]);
 
     return (
         <Container>

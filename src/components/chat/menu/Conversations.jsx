@@ -47,7 +47,7 @@ const Conversations = ({ text }) => {
     const [loading, setLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
 
-    const { account, socket, newMessageFlag, updateMessage } = useContext(AccountContext);
+    const { account, socket, newMessageFlag, updateMessage, readConversationId } = useContext(AccountContext);
 
     const loadUsers = useCallback(async () => {
         try {
@@ -81,23 +81,42 @@ const Conversations = ({ text }) => {
 
     useEffect(() => {
         loadUsers();
-    }, [loadUsers, newMessageFlag, updateMessage, refreshKey]);
+    }, [loadUsers]);
 
     useEffect(() => {
         const socketInstance = socket.current;
         if (!socketInstance || !account?.sub) return;
 
-        const refreshConversations = (message) => {
+        const updateConversationLocally = (message) => {
             if (message?.receiverId === account.sub || message?.senderId === account.sub) {
-                setRefreshKey((value) => value + 1);
-                setTimeout(() => setRefreshKey((value) => value + 1), 500);
+                setChatSummaries((prev) =>
+                    prev.map((summary) => {
+                        const isRelevantConversation =
+                            (summary.conversation?._id === message.conversationId) ||
+                            ((message.senderId === summary.user?.sub || message.receiverId === summary.user?.sub) &&
+                             (message.receiverId === account.sub || message.senderId === account.sub));
+
+                        if (isRelevantConversation) {
+                            return {
+                                ...summary,
+                                lastMessage: {
+                                    text: message.text,
+                                    createdAt: message.createdAt
+                                },
+                                updatedAt: message.createdAt,
+                                unreadCount: message.senderId === account.sub ? 0 : (summary.unreadCount || 0)
+                            };
+                        }
+                        return summary;
+                    })
+                );
             }
         };
 
-        socketInstance.on('getMessage', refreshConversations);
+        socketInstance.on('getMessage', updateConversationLocally);
 
         return () => {
-            socketInstance.off('getMessage', refreshConversations);
+            socketInstance.off('getMessage', updateConversationLocally);
         };
     }, [account?.sub, socket]);
 
@@ -137,6 +156,7 @@ const Conversations = ({ text }) => {
                                             lastMessage={summary.lastMessage}
                                             unreadCount={summary.unreadCount}
                                             conversationUpdatedAt={summary.updatedAt}
+                                            conversationId={summary.conversation?._id}
                                         />
                                         <StyledDivider />
                                     </React.Fragment>

@@ -86,7 +86,7 @@ const Messages = ({ person, conversation, messages, setMessages, isIncognito }) 
     const scrollRef = useRef();
     const activeChatRef = useRef({});
 
-    const { account, socket, newMessageFlag, setNewMessageFlag, setUpdateMessage } = useContext(AccountContext)
+    const { account, socket } = useContext(AccountContext)
 
     useEffect(() => {
         activeChatRef.current = {
@@ -113,7 +113,7 @@ const Messages = ({ person, conversation, messages, setMessages, isIncognito }) 
                     markMessagesRead({
                         conversationId: data.conversationId,
                         receiverId: accountSub
-                    }).finally(() => setUpdateMessage(prev => !prev));
+                    });
                 }
             }
         }
@@ -122,7 +122,7 @@ const Messages = ({ person, conversation, messages, setMessages, isIncognito }) 
         return () => {
             socket.current?.off('getMessage', handleIncoming);
         }
-    }, [socket, setMessages, setUpdateMessage]);
+    }, [socket, setMessages]);
 
     useEffect(() => {
         const getMessageDetails = async () => {
@@ -144,7 +144,7 @@ const Messages = ({ person, conversation, messages, setMessages, isIncognito }) 
         } else {
             setIsLoading(false);
         }
-    }, [person._id, conversation?._id, newMessageFlag]);
+    }, [person._id, conversation?._id]);
 
     useEffect(() => {
         scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -185,7 +185,6 @@ const Messages = ({ person, conversation, messages, setMessages, isIncognito }) 
                 if (response?.data) {
                     setMessages((prev) => [...prev, response.data]);
                 }
-                setNewMessageFlag(prev => !prev)
             } else {
                 setMessages((prev) => [...prev, message]);
             }

@@ -39,6 +39,7 @@ const AccountProvider = ({ children }) => {
     const [activeUsers, setActiveUsers] = useState([])
     const [newMessageFlag, setNewMessageFlag] = useState(false)
     const [updateMessage, setUpdateMessage] = useState(false)
+    const [readConversationId, setReadConversationId] = useState(null)
 
     const socket = useRef();
     const accountRef = useRef(account);
@@ -143,7 +144,9 @@ const AccountProvider = ({ children }) => {
             newMessageFlag,
             setNewMessageFlag,
             updateMessage, 
-            setUpdateMessage
+            setUpdateMessage,
+            readConversationId,
+            setReadConversationId
         }}>
             {children}
         </AccountContext.Provider>

@@ -136,13 +136,14 @@ const UnreadCount = styled(Box)`
     margin-left: 8px;
 `;
 
-const Conversation = ({ user, lastMessage, unreadCount = 0, conversationUpdatedAt }) => {
+const Conversation = ({ user, lastMessage, unreadCount = 0, conversationUpdatedAt, conversationId }) => {
     const url = getProfilePictureUrl(user, emptyProfilePicture);
 
-    const { setPerson, account, newMessageFlag, updateMessage, activeUsers } = useContext(AccountContext)
+    const { setPerson, account, newMessageFlag, updateMessage, activeUsers, readConversationId } = useContext(AccountContext)
     
     const isUserOnline = activeUsers?.find(u => u.sub === user.sub);
-    const hasUnread = unreadCount > 0;
+    const effectiveUnreadCount = readConversationId === conversationId ? 0 : unreadCount;
+    const hasUnread = effectiveUnreadCount > 0;
 
     const [message, setMessage] = useState(lastMessage ? {
         text: lastMessage.text,
@@ -226,7 +227,7 @@ const Conversation = ({ user, lastMessage, unreadCount = 0, conversationUpdatedA
                         )}
                     </Box>
                 </Box>
-                {hasUnread && <UnreadCount>{unreadCount > 99 ? '99+' : unreadCount}</UnreadCount>}
+                {hasUnread && <UnreadCount>{effectiveUnreadCount > 99 ? '99+' : effectiveUnreadCount}</UnreadCount>}
             </Box>
         </Component>
     )
