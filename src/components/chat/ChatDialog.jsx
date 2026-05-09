@@ -25,6 +25,7 @@ const dialogStyle = {
 
 const Component = styled(Box)`
     display: flex;
+    height: 100%;
 `;
 
 const LeftComponent = styled(Box)`
@@ -59,7 +60,7 @@ const ChatDialog = () => {
                 </LeftComponent>
                 <RightComponent>
                     {
-                        (Object?.keys(person)?.length) ? <ChatBox /> : <Suspense fallback={<Loader />}><EmptyChat /></Suspense>
+                        (Object?.keys(person)?.length) ? <ChatBox /> : <Suspense fallback={<Loader fill message="Preparing chat area..." />}><EmptyChat /></Suspense>
                     }
                 </RightComponent>
             </Component>

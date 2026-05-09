@@ -29,9 +29,10 @@ const Title = styled(Typography)`
 `;
 
 const LoaderWrapper = styled(Box)`
-  marginTop: 100px;
-  width: 400px;
-  display: ${(props) => (props.isLoading ? 'block' : 'none')};
+  min-height: 260px;
+  display: ${(props) => (props.isLoading ? 'flex' : 'none')};
+  align-items: center;
+  justify-content: center;
 `;
 
 
@@ -59,9 +60,14 @@ const EmptyChat = () => {
         <Component>
             <Container>
                 <LoaderWrapper isLoading={isLoading}>
-                    <Loader />
+                    <Loader compact message="Loading welcome screen..." />
                 </LoaderWrapper>
-                <Image src={emptyChatImage} alt="empty" onLoad={handleImageLoad} />
+                <Image
+                    src={emptyChatImage}
+                    alt="empty"
+                    onLoad={handleImageLoad}
+                    style={{ display: isLoading ? 'none' : 'inline-block' }}
+                />
                 <Title>WhatsApp Clone</Title>
                 <SubTitle>Real time messaging in a secure way</SubTitle>
                 <SubTitle>Simplifying communication</SubTitle>

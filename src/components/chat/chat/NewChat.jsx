@@ -1,41 +1,39 @@
 import React from "react";
-import { Box, Typography, Button, styled } from "@mui/material";
+import { Box, Typography, styled } from "@mui/material";
 
-const style = {
-    height: "80vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "column",
-}
+const Wrapper = styled(Box)`
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 32px 24px;
+    color: #2b2b2b;
+`
 
-const Header = styled(Typography)({
-    marginBottom: '20px'
-})
+const Header = styled(Typography)`
+    margin-bottom: 20px;
+    font-weight: 700;
+`
 
-const Helper = styled(Typography)({
-    marginBottom: '40px'
-})
+const Helper = styled(Typography)`
+    margin-bottom: 32px;
+    max-width: 420px;
+    color: #5f6368;
+`
 
 const NewChat = () => {
     return (
-        <Box
-            style={style}
-        >
+        <Wrapper>
             <Header variant="h4">
-                Welcome to the Chat
+                Ready when you are
             </Header>
             <Helper variant="body1">
-                Start the conversation.
+                Select a conversation from the left or type a message below to start chatting. Attach images and files securely with the paperclip icon.
             </Helper>
-            <Button
-                variant="contained"
-                color="success"
-                size="large"
-            >
-                Send Your First Message
-            </Button>
-        </Box>
+        </Wrapper>
     );
 };
 

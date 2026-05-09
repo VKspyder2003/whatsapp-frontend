@@ -7,14 +7,13 @@ import Loader from './components/Loader/Loader';
 
 const Messenger = lazy(() => import('./components/Messenger'))
 
-
 const App = () => {
-    const clientId = '94553721167-clh0t57pq0uhr9b1tkr4ij58p1s3e5lg.apps.googleusercontent.com'
+    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || '94553721167-clh0t57pq0uhr9b1tkr4ij58p1s3e5lg.apps.googleusercontent.com'
 
     return (
         <GoogleOAuthProvider clientId={clientId}>
             <AccountProvider>
-                <Suspense fallback={<Loader />}>
+                <Suspense fallback={<Loader fullPage message="Opening WhatsApp..." />}>
                     <Messenger />
                 </Suspense>
             </AccountProvider>

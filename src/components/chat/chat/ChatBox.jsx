@@ -1,36 +1,125 @@
 import { useContext, useState, useEffect } from "react";
 
-import { Box } from "@mui/material";
+import { Box, styled } from "@mui/material";
 
 import { AccountContext } from "../../../context/AccountProvider";
 
 import ChatHeader from "./ChatHeader";
 import Messages from "./Messages";
+import Loader from "../../Loader/Loader";
 
-import { getConversation } from "../../../service/api";
+import { getConversation, markMessagesRead, setConversation as createConversation } from "../../../service/api";
+
+const Container = styled(Box)`
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+`
+
+const LoadingArea = styled(Box)`
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url(${'https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'});
+    background-size: 100px 100px;
+`
 
 const ChatBox = () => {
 
-    const { person, account } = useContext(AccountContext)
+    const { person, account, socket, setUpdateMessage } = useContext(AccountContext)
 
-    const [conversation, setConversation] = useState({});
+    const [conversation, setConversation] = useState(null);
     const [messages, setMessages] = useState([]);
     const [isIncognito, setIsIncognito] = useState(false);
+    const [isConversationLoading, setIsConversationLoading] = useState(false);
 
     useEffect(() => {
+        const socketInstance = socket.current;
+
+        if (!socketInstance || !account?.sub || !person?.sub) return;
+
+        const payload = { senderId: account.sub, receiverId: person.sub };
+        socketInstance.emit('getIncognitoState', payload);
+
+        const handleIncognitoUpdate = ({ participants, isIncognito: nextIncognitoState }) => {
+            const isCurrentConversation = participants?.includes(account.sub) && participants?.includes(person.sub);
+
+            if (isCurrentConversation) {
+                setIsIncognito(Boolean(nextIncognitoState));
+            }
+        };
+
+        socketInstance.on('incognitoUpdated', handleIncognitoUpdate);
+
+        return () => {
+            socketInstance.off('incognitoUpdated', handleIncognitoUpdate);
+        };
+    }, [account?.sub, person?.sub, socket]);
+
+    useEffect(() => {
+        let isMounted = true;
+
         const getConversationDetails = async () => {
-            let data = await getConversation({ senderId: account.sub, receiverId: person.sub });
-            // console.log(data)
-            setConversation(data);
+            if (!account?.sub || !person?.sub) {
+                return;
+            }
+
+            setIsConversationLoading(true);
+            setMessages([]);
+            setIsIncognito(false);
+
+            try {
+                const members = { senderId: account.sub, receiverId: person.sub };
+                let data = await getConversation(members);
+
+                if (!data?._id) {
+                    await createConversation(members);
+                    data = await getConversation(members);
+                }
+
+                if (isMounted) {
+                    setConversation(data || {});
+                }
+
+                if (data?._id && data?.unreadCount > 0) {
+                    await markMessagesRead({
+                        conversationId: data._id,
+                        receiverId: account.sub
+                    });
+                    setUpdateMessage(prev => !prev);
+                }
+            } catch (error) {
+                console.error('Failed to prepare conversation:', error);
+                if (isMounted) {
+                    setConversation({});
+                }
+            } finally {
+                if (isMounted) {
+                    setIsConversationLoading(false);
+                }
+            }
         }
+
         getConversationDetails();
-    }, [person.sub]);
+
+        return () => {
+            isMounted = false;
+        }
+    }, [account?.sub, person?.sub, setUpdateMessage]);
 
     return (
-        <Box style={{ height: '75%' }}>
+        <Container>
             <ChatHeader person={person} messages={messages} setMessages={setMessages} isIncognito={isIncognito} setIsIncognito={setIsIncognito} />
-            <Messages person={person} conversation={conversation} messages={messages} setMessages={setMessages} isIncognito={isIncognito} />
-        </Box>
+            {isConversationLoading ? (
+                <LoadingArea>
+                    <Loader fill message={`Opening chat with ${person.name}...`} />
+                </LoadingArea>
+            ) : (
+                <Messages person={person} conversation={conversation} messages={messages} setMessages={setMessages} isIncognito={isIncognito} />
+            )}
+        </Container>
     )
 }
 

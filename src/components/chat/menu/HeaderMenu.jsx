@@ -1,35 +1,35 @@
 import { useState, useContext } from 'react';
 
 import InfoDrawer from '../../drawer/InfoDrawer';
-
-import { MoreVert } from '@mui/icons-material'
-import { Menu, MenuItem, styled } from '@mui/material';
-
+import LogoutConfirmationModal from '../../modals/LogoutConfirmationModal';
 import { AccountContext } from '../../../context/AccountProvider';
 
-import LogoutConfirmationModal from '../../modals/LogoutConfirmationModal';
+// Updated MUI Imports
+import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import { Menu, MenuItem, ListItemIcon, ListItemText, IconButton, Divider } from '@mui/material';
 
-const MenuOption = styled(MenuItem)(() => ({
-    fontSize: '14px',
-    padding: '15px 60px 5px 24px',
-    color: '#4A4A4A'
-}));
 const HeaderMenu = () => {
-    const [open, setOpen] = useState(null);
+    // Renamed 'open' to 'anchorEl' to properly store the HTML element
+    const [anchorEl, setAnchorEl] = useState(null);
+    const isOpen = Boolean(anchorEl); 
+    
     const [openDrawer, setOpenDrawer] = useState(false);
-    const [confirmationModalOpen, setConfirmationModalOpen] = useState(false); // State for the confirmation modal
+    const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
+    
     const { setAccount } = useContext(AccountContext);
 
     const handleClose = () => {
-        setOpen(null);
+        setAnchorEl(null);
     }
 
     const handleClick = (event) => {
-        setOpen(event.currentTarget);
+        setAnchorEl(event.currentTarget);
     }
 
     const toggleDrawer = () => {
-        setOpenDrawer(true)
+        setOpenDrawer(true);
     }
 
     const handleLogout = () => {
@@ -48,26 +48,93 @@ const HeaderMenu = () => {
 
     return (
         <>
-            <MoreVert titleAccess='More Options' onClick={handleClick} />
-            <Menu
-                anchorEl={open}
-                keepMounted
-                open={open}
-                onClose={handleClose}
-                getContentAnchorEl={null}
-                anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'center',
-                }}
-                transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
+            {/* Wrapped MoreVert in an IconButton for better accessibility and click ripple */}
+            <IconButton
+                onClick={handleClick}
+                title="More Options"
+                aria-label="More Options"
+                sx={{
+                    width: 40,
+                    height: 40,
+                    p: 0,
+                    color: '#54656f'
                 }}
             >
-                <MenuOption onClick={() => { handleClose(); toggleDrawer(); }}>Profile</MenuOption>
-                <MenuOption onClick={handleLogoutConfirmation}>Logout</MenuOption>
+                <MoreVertIcon fontSize="small" />
+            </IconButton>
+            
+            <Menu
+                anchorEl={anchorEl}
+                open={isOpen}
+                onClose={handleClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                PaperProps={{
+                    elevation: 0,
+                    sx: {
+                        overflow: 'visible',
+                        filter: 'drop-shadow(0px 4px 12px rgba(0,0,0,0.1))',
+                        mt: 1.5,
+                        borderRadius: '12px',
+                        minWidth: '180px',
+                        '&::before': {
+                            content: '""',
+                            display: 'block',
+                            position: 'absolute',
+                            top: 0,
+                            right: 14,
+                            width: 10,
+                            height: 10,
+                            bgcolor: 'background.paper',
+                            transform: 'translateY(-50%) rotate(45deg)',
+                            zIndex: 0,
+                        },
+                    },
+                }}
+            >
+                {/* Profile Option */}
+                <MenuItem 
+                    onClick={() => { handleClose(); toggleDrawer(); }}
+                    sx={{ borderRadius: '8px', mx: 1, my: 0.5, px: 1.5 }}
+                >
+                    <ListItemIcon>
+                        <AccountCircleOutlinedIcon fontSize="small" color="primary" />
+                    </ListItemIcon>
+                    <ListItemText 
+                        primary="Profile" 
+                        primaryTypographyProps={{ fontSize: '14px', fontWeight: 500, color: '#4A4A4A' }} 
+                    />
+                </MenuItem>
+
+                <Divider sx={{ my: 0.5, mx: 1 }} />
+
+                {/* Logout Option */}
+                <MenuItem 
+                    onClick={handleLogoutConfirmation}
+                    sx={{ 
+                        borderRadius: '8px', 
+                        mx: 1, 
+                        my: 0.5, 
+                        px: 1.5,
+                        color: 'error.main',
+                        '&:hover': {
+                            backgroundColor: '#fee2e2', // Light red hover state
+                            color: 'error.dark'
+                        }
+                    }}
+                >
+                    <ListItemIcon>
+                        <LogoutOutlinedIcon fontSize="small" color="error" />
+                    </ListItemIcon>
+                    <ListItemText 
+                        primary="Logout" 
+                        primaryTypographyProps={{ fontSize: '14px', fontWeight: 500 }} 
+                    />
+                </MenuItem>
             </Menu>
+
             <InfoDrawer open={openDrawer} setOpen={setOpenDrawer} profile={true} />
+            
             <LogoutConfirmationModal
                 open={confirmationModalOpen}
                 handleClose={closeConfirmationModal}

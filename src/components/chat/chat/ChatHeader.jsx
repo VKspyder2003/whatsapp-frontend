@@ -1,10 +1,11 @@
-import { useContext, useState, useEffect } from "react";
+import { useCallback, useContext, useState, useEffect } from "react";
 
-import { Box, Typography, styled, Menu, MenuItem } from "@mui/material";
-import { MoreVert, Visibility, VisibilityOff } from "@mui/icons-material";
+import { Box, Typography, styled, Menu, MenuItem, Divider, ListItemIcon, ListItemText } from "@mui/material";
+import { MoreVert, Visibility, VisibilityOff, Person, DeleteOutline, VolumeOff, Flag } from "@mui/icons-material";
 
 import { defaultProfilePicture } from "../../../constants/data";
 import { AccountContext } from "../../../context/AccountProvider";
+import { getProfilePictureUrl, setFallbackImage } from "../../../utils/common-utils";
 
 import ProfileModal from "../../modals/ProfileModal";
 import ClearChatConfirmationModal from "../../modals/ClearChatConfirmationModal";
@@ -15,52 +16,135 @@ import "react-toastify/dist/ReactToastify.css";
 import { clearConversation } from "../../../service/api";
 
 
+const StyledMenu = styled(Menu)(() => ({
+    '& .MuiPaper-root': {
+        borderRadius: '8px',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+        minWidth: '200px',
+    }
+}));
+
 const MenuOption = styled(MenuItem)(() => ({
-    fontSize: '14px',
-    padding: '15px 60px 5px 24px',
-    color: '#4A4A4A'
+    fontSize: '13px',
+    padding: '10px 16px',
+    color: '#2c3e50',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    borderRadius: '4px',
+    margin: '4px 8px',
+    
+    '&:hover': {
+        backgroundColor: '#f0f2f5',
+        paddingLeft: '18px',
+    },
+    
+    '& .MuiListItemIcon-root': {
+        minWidth: '36px',
+        color: '#1b8e5c',
+    }
+}));
+
+const DangerMenuOption = styled(MenuItem)(() => ({
+    fontSize: '13px',
+    padding: '10px 16px',
+    color: '#d32f2f',
+    transition: 'all 0.2s ease',
+    borderRadius: '4px',
+    margin: '4px 8px',
+    
+    '&:hover': {
+        backgroundColor: '#ffebee',
+        paddingLeft: '18px',
+    },
+    
+    '& .MuiListItemIcon-root': {
+        minWidth: '36px',
+        color: '#d32f2f',
+    }
 }));
 
 const Header = styled(Box)`
-    height: 44px;
-    background: #ededed;
+    height: 56px;
+    background: linear-gradient(135deg, #f5f5f5 0%, #ededed 100%);
     display: flex;
-    padding: 8px 16px;
+    padding: 8px 20px;
     align-items: center;
+    border-bottom: 1px solid #d0d0d0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 `;
 
 const Image = styled('img')({
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     objectFit: 'cover',
     borderRadius: '50%',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    border: '2px solid transparent',
+    '&:hover': {
+        border: '2px solid #1b8e5c',
+        transform: 'scale(1.05)'
+    }
 })
 
 const Name = styled(Typography)`
     margin-left: 12px !important;
     cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        color: #1b8e5c;
+    }
 `;
 
 const RightContainer = styled(Box)`
     margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    
     & > svg {
         padding: 8px;
         font-size: 22px;
-        color: #000;
+        color: #555;
         cursor: pointer;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        
+        &:hover {
+            background-color: rgba(27, 142, 92, 0.08);
+            color: #1b8e5c;
+            transform: scale(1.1);
+        }
+        
+        &:active {
+            transform: scale(0.95);
+        }
     }
 `;
 
-const Status = styled(Typography)`
-    font-size: 12px !important;
-    color: rgb(0, 0, 0, 0.6);
-    margin-left: 12px !important;
-`;
+const Status = styled(Typography, {
+    shouldForwardProp: (prop) => prop !== 'isOnline'
+})(({ isOnline }) => ({
+    fontSize: '12px !important',
+    color: 'rgb(0, 0, 0, 0.6) !important',
+    marginLeft: '4px !important',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    
+    '&::before': {
+        content: '""',
+        width: '6px',
+        height: '6px',
+        backgroundColor: isOnline ? '#4caf50' : '#f44336',
+        borderRadius: '50%'
+    }
+}));
 
 const ChatHeader = ({ person, messages, setMessages, isIncognito, setIsIncognito }) => {
 
-    const url = person.picture || defaultProfilePicture;
+    const url = getProfilePictureUrl(person, defaultProfilePicture);
 
     const { activeUsers, socket, account, setUpdateMessage } = useContext(AccountContext)
 
@@ -68,24 +152,29 @@ const ChatHeader = ({ person, messages, setMessages, isIncognito, setIsIncognito
     const [isModalOpen, setModalOpen] = useState(false);
     const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
-    const handleIncognitoToggle = (newIncognitoState) => {
-        setIsIncognito(newIncognitoState);
-        const message = newIncognitoState
-            ? `${person.name} turned ON incognito mode`
-            : `${person.name} turned OFF incognito mode`;
-        toast(message);
-    };
+    const isUserOnline = activeUsers?.find(user => user.sub === person.sub);
+
+    const handleIncognitoUpdate = useCallback(({ participants, isIncognito: nextIncognitoState, changedBy }) => {
+        const isCurrentConversation = participants?.includes(account.sub) && participants?.includes(person.sub);
+
+        if (!isCurrentConversation) return;
+
+        setIsIncognito(Boolean(nextIncognitoState));
+
+        if (!changedBy) return;
+
+        const actor = changedBy === account.sub ? 'You' : person.name;
+        const verb = nextIncognitoState ? 'enabled' : 'disabled';
+        toast.info(`${actor} ${verb} incognito mode`);
+    }, [account.sub, person.name, person.sub, setIsIncognito]);
 
     useEffect(() => {
-        const onGetIncognito = (newIncognitoState) => {
-            handleIncognitoToggle(newIncognitoState);
-        };
-
-        socket.current.on('getIncognito', onGetIncognito);
+        const socketInstance = socket.current;
+        socketInstance?.on('incognitoUpdated', handleIncognitoUpdate);
         return () => {
-            socket.removeListener('getIncognito', onGetIncognito);
+            socketInstance?.off('incognitoUpdated', handleIncognitoUpdate);
         };
-    }, [socket]);
+    }, [socket, handleIncognitoUpdate]);
 
 
     const handleClick = (event) => {
@@ -112,7 +201,7 @@ const ChatHeader = ({ person, messages, setMessages, isIncognito, setIsIncognito
 
     const handleClearChat = async ()=> {
         try {
-            if (messages.length == 0) {
+            if (messages.length === 0) {
                 toast.error('Chats are already empty');
                 return;
             }
@@ -132,23 +221,29 @@ const ChatHeader = ({ person, messages, setMessages, isIncognito, setIsIncognito
 
     const toggleIncognito = () => {
         const newIncognitoState = !isIncognito;
-        setIsIncognito(newIncognitoState);
-
-        socket.current.emit('setIncognito', { receiverId: person.sub }, newIncognitoState);
-
-        const message = newIncognitoState
-            ? `Incognito mode is now ON for ${person.name}`
-            : `Incognito mode is now OFF for ${person.name}`;
-        toast(message);
+        socket.current?.emit('setIncognito', {
+            senderId: account.sub,
+            receiverId: person.sub,
+            isIncognito: newIncognitoState
+        });
     };
 
 
     return (
         <Header>
-            <Image title="View Profile" onClick={handleNameClick} src={url} alt="dp" />
+            <Image
+                title="View Profile"
+                onClick={handleNameClick}
+                src={url}
+                alt="dp"
+                onError={(event) => setFallbackImage(event, defaultProfilePicture)}
+                referrerPolicy="no-referrer"
+            />
             <Box>
                 <Name onClick={handleNameClick}>{person.name}</Name>
-                <Status>{activeUsers?.find(user => user.sub === person.sub) ? 'Online' : 'Offline'}</Status>
+                <Status isOnline={isUserOnline}>
+                    {isUserOnline ? 'Online' : 'Offline'}
+                </Status>
             </Box>
             <RightContainer>
                 {isIncognito ? (
@@ -157,24 +252,52 @@ const ChatHeader = ({ person, messages, setMessages, isIncognito, setIsIncognito
                     <Visibility titleAccess="Incognito On" onClick={() => { toggleIncognito(); }} />
                 )}
                 <MoreVert titleAccess="More Options" onClick={handleClick} />
-                <Menu
+                <StyledMenu
                     anchorEl={open}
                     keepMounted
-                    open={open}
+                    open={Boolean(open)}
                     onClose={handleClose}
-                    getContentAnchorEl={null}
                     anchorOrigin={{
                         vertical: 'bottom',
-                        horizontal: 'center',
+                        horizontal: 'right',
                     }}
                     transformOrigin={{
                         vertical: 'top',
                         horizontal: 'right',
                     }}
                 >
-                    <MenuOption onClick={handleNameClick}>Profile</MenuOption>
-                    <MenuOption onClick={clearChat}>Clear Chat</MenuOption>
-                </Menu>
+                    <MenuOption onClick={() => { handleNameClick(); handleClose(); }}>
+                        <ListItemIcon>
+                            <Person fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>View Profile</ListItemText>
+                    </MenuOption>
+                    
+                    <Divider style={{ margin: '8px 0', backgroundColor: '#e0e0e0' }} />
+                    
+                    <MenuOption onClick={() => { toast.info('Notifications muted for 8 hours'); handleClose(); }}>
+                        <ListItemIcon>
+                            <VolumeOff fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Mute Notifications</ListItemText>
+                    </MenuOption>
+                    
+                    <MenuOption onClick={() => { clearChat(); handleClose(); }}>
+                        <ListItemIcon>
+                            <DeleteOutline fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Clear Chat</ListItemText>
+                    </MenuOption>
+                    
+                    <Divider style={{ margin: '8px 0', backgroundColor: '#e0e0e0' }} />
+                    
+                    <DangerMenuOption onClick={() => { toast.info('Chat reported'); handleClose(); }}>
+                        <ListItemIcon>
+                            <Flag fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Report Chat</ListItemText>
+                    </DangerMenuOption>
+                </StyledMenu>
             </RightContainer>
             <ProfileModal open={isModalOpen} handleClose={handleCloseModal} person={person} />
             <ToastContainer position="top-center" autoClose={3000} />

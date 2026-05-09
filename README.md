@@ -27,6 +27,10 @@ This project is a WhatsApp Clone, developed using the MERN stack (MongoDB, Expre
 - **Express.js:**
   - Backend framework for handling API requests, user authentication, and serving static files.
 
+- **Environment Configuration:**
+  - Stores sensitive keys and backend endpoints in a `.env` file so credentials are not hardcoded.
+  - Uses `REACT_APP_GOOGLE_CLIENT_ID`, `REACT_APP_BACKEND_URL`, and `REACT_APP_SOCKET_URL` in development.
+
 - **React:**
   - Frontend library for building a dynamic and responsive user interface.
 

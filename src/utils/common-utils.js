@@ -8,6 +8,38 @@ export const formatDate = (date) => {
     return `${hours < 10 ? '0' + hours : hours}:${minutes < 10 ? '0' + minutes : minutes}`;
 }
 
+export const formatJoinedDate = (date) => {
+    const value = new Date(date);
+
+    if (Number.isNaN(value.getTime())) return '';
+
+    return value.toLocaleDateString(undefined, {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    });
+}
+
+export const getProfilePictureUrl = (user, fallback) => {
+    const picture = [
+        user?.picture,
+        user?.profilePicture,
+        user?.avatar,
+        user?.photo,
+        user?.imageUrl
+    ].find((value) => typeof value === 'string' && value.trim());
+
+    return picture || fallback;
+}
+
+export const setFallbackImage = (event, fallback) => {
+    const image = event.currentTarget;
+
+    if (image.src !== fallback) {
+        image.src = fallback;
+    }
+}
+
 export const downloadMedia = async (e, originalImage) => {
     e.preventDefault();
     try {

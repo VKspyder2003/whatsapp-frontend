@@ -10,37 +10,58 @@ import { AccountContext } from "../../../context/AccountProvider";
 import { iconPDF } from '../../../constants/data';
 
 const Wrapper = styled(Box)`
-    background: #FFFFFF;
-    padding: 5px;
+    background: #ffffff;
+    padding: 10px 14px;
     max-width: 60%;
     width: fit-content;
     display: flex;
-    border-radius: 10px;
+    flex-direction: column;
+    border-radius: 18px;
     word-break: break-word;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    animation: slideInLeft 0.3s ease-out;
+    margin: 6px 0;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
 `;
 
 const Own = styled(Box)`
     background: #dcf8c6;
-    padding: 5px;
+    padding: 10px 14px;
     max-width: 60%;
     width: fit-content;
-    margin-left: auto;
     display: flex;
-    border-radius: 10px;
+    flex-direction: column;
+    border-radius: 18px;
     word-break: break-word;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    animation: slideInRight 0.3s ease-out;
+    margin: 6px 0 6px auto;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
 `;
 
 const Text = styled(Typography)`
     font-size: 14px;
-    padding: 0 25px 0 5px;
+    padding: 0;
+    color: #2c2c2c;
+    line-height: 1.4;
+    word-wrap: break-word;
 `;
 
 const Time = styled(Typography)`
-    font-size: 10px;
+    font-size: 11px;
     color: #919191;
     margin-top: 6px;
     word-break: keep-all;
     margin-top: auto;
+    align-self: flex-end;
 `;
 
 const Message = ({ message }) => {
@@ -85,24 +106,75 @@ const ImageMessage = ({ message }) => {
         <div style={{ position: 'relative' }}>
             {
                 message?.text?.includes('.pdf') ?
-                    <div style={{ display: 'flex' }}>
-                        <img src={iconPDF} alt="pdf-icon" style={{ width: 80 }} />
-                        <Typography style={{ fontSize: 14 }} >{message.text.split("/").pop()}</Typography>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '8px 0'
+                    }}>
+                        <img src={iconPDF} alt="pdf-icon" style={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'contain'
+                        }} />
+                        <div>
+                            <Typography style={{
+                                fontSize: 13,
+                                fontWeight: 500,
+                                color: '#2c2c2c',
+                                wordBreak: 'break-word'
+                            }}>
+                                {message.text.split("/").pop()}
+                            </Typography>
+                            <Typography style={{
+                                fontSize: 11,
+                                color: '#999',
+                                marginTop: '4px'
+                            }}>
+                                PDF Document
+                            </Typography>
+                        </div>
                     </div>
                     :
-                    <img style={{ width: 300, height: '100%', objectFit: 'cover' }} src={message.text} alt={message.text} />
+                    <img style={{
+                        width: 300,
+                        height: '100%',
+                        objectFit: 'cover',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s ease',
+                        '&:hover': {
+                            transform: 'scale(1.02)'
+                        }
+                    }} src={message.text} alt={message.text} />
             }
-            <Time style={{ position: 'absolute', bottom: 0, right: 0 }}>
+            <Box style={{
+                position: 'absolute',
+                bottom: 8,
+                right: 8,
+                display: 'flex',
+                gap: '6px'
+            }}>
                 <GetApp
                     onClick={(e) => downloadMedia(e, message.text)}
                     fontSize='small'
-                    style={{ marginRight: 10, border: '1px solid grey', borderRadius: '50%', cursor: "pointer" }}
+                    style={{
+                        padding: '6px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        color: '#1b8e5c',
+                        '&:hover': {
+                            backgroundColor: '#ffffff',
+                            transform: 'scale(1.1)'
+                        }
+                    }}
+                    titleAccess="Download"
                 />
-                {formatDate(message.createdAt)}
-            </Time>
+            </Box>
         </div>
     )
 }
-
 
 export default Message;
